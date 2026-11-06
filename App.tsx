@@ -1,124 +1,77 @@
-      <SectionTitle title="Categorias populares" action="Ver todas" onPress={()=>goTab('Categorias')}/>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:10,paddingBottom:8}}>
-        {CATEGORIES.filter(c=>c!=='Todos').map((c,i)=><TouchableOpacity key={c} style={styles.categoryChip} onPress={()=>{setCategory(c);goTab('Categorias');}}><Text style={{fontSize:25}}>{['👸','🏎️','🧩','🧸','🔬','🧱','⚽'][i]}</Text><Text style={styles.categoryText}>{c}</Text></TouchableOpacity>)}
-      </ScrollView>
-      <SectionTitle title="Destaques encantados" action="Ver mais" onPress={()=>goTab('Categorias')}/>
-      <ProductGrid items={filtered.slice(0,4)}/>
-      <SectionTitle title="Mais vendidos" action="Ver todos" onPress={()=>goTab('Categorias')}/>
-      <ProductGrid items={[...products].sort((a,b)=>b.rating-a.rating).slice(0,4)}/>
-    </ScrollView>;
+import React, { Component, ErrorInfo, ReactNode } from 'react';
+import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { useFonts, Nunito_400Regular, Nunito_500Medium, Nunito_700Bold } from '@expo-google-fonts/nunito';
 
-    if (page === 'Categorias') return <ScrollView style={styles.page} contentContainerStyle={{paddingBottom:100}}>
-      <Header title="Categorias"/>
-      <View style={styles.searchBar}><Text>⌕</Text><TextInput value={search} onChangeText={setSearch} placeholder="Buscar brinquedos..." style={{flex:1,padding:0}}/></View>
-      <Text style={styles.sectionTitle}>Encontre a brincadeira ideal</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{gap:8,paddingBottom:14}}>
-        {CATEGORIES.map(c=><TouchableOpacity key={c} onPress={()=>setCategory(c)} style={[styles.filterChip,category===c&&styles.filterActive]}><Text style={[styles.filterText,category===c&&styles.filterTextActive]}>{c}</Text></TouchableOpacity>)}
-      </ScrollView>
-      <Text style={styles.fieldLabel}>Filtrar por idade</Text>
-      <View style={styles.rowWrap}>{['Todas','2+ anos','3+ anos','5+ anos','6+ anos','8+ anos'].map(a=><TouchableOpacity key={a} onPress={()=>setAgeFilter(a)} style={[styles.filterChip,ageFilter===a&&styles.filterActive]}><Text style={[styles.filterText,ageFilter===a&&styles.filterTextActive]}>{a}</Text></TouchableOpacity>)}</View>
-      <Text style={styles.muted}>{filtered.length} produtos encontrados</Text>
-      <ProductGrid items={filtered}/>
-    </ScrollView>;
+import { AuthProvider } from './src/context/AuthContext';
+import { CartProvider } from './src/context/CartContext';
+import { FavoritesProvider } from './src/context/FavoritesContext';
+import { OrderProvider } from './src/context/OrderContext';
+import { AppNavigator } from './src/navigation/AppNavigator';
+import { colors } from './src/theme/colors';
 
-    if (page === 'Detalhes' && selected) return <ScrollView style={styles.page} contentContainerStyle={{paddingBottom:100}}>
-      <Header title="Detalhes do produto" back/>
-      <View style={styles.detailImage}><Text style={{fontSize:120}}>{selected.image}</Text><TouchableOpacity style={styles.detailHeart} onPress={()=>toggleFavorite(selected.id)}><Text style={{fontSize:27,color:favorites.includes(selected.id)?'#E86D80':'#8195A8'}}>{favorites.includes(selected.id)?'♥':'♡'}</Text></TouchableOpacity></View>
-      <View style={styles.detailCard}><Text style={styles.badgeInline}>{selected.category}</Text><Text style={styles.detailTitle}>{selected.name}</Text><Text style={styles.rating}>★ {selected.rating.toFixed(1)} · Avaliações dos clientes</Text><Text style={styles.detailPrice}>{money(selected.price)}</Text><Text style={styles.pixHint}>ou {money(selected.price*.9)} no Pix (10% de desconto no checkout)</Text><Text style={styles.sectionTitle}>Sobre o brinquedo</Text><Text style={styles.body}>{selected.description}</Text><InfoRow label="Idade recomendada" value={selected.age}/><InfoRow label="Material" value={selected.material}/>{selected.pieces ? <InfoRow label="Quantidade de peças" value={`${selected.pieces} peças`} /> : null}<InfoRow label="Categoria" value={selected.category}/><Button label="Adicionar à sacola" onPress={()=>addToCart(selected)}/><Button label="Escrever avaliação" secondary onPress={()=>setPage('Avaliar')}/></View>
-      <SectionTitle title="Você também pode gostar" action="" onPress={()=>{}}/><ProductGrid items={products.filter(p=>p.id!==selected.id).slice(0,2)}/>
-    </ScrollView>;
+// Força a fonte Nunito em todos os textos do app
+(Text as any).defaultProps = (Text as any).defaultProps || {};
+(Text as any).defaultProps.style = { fontFamily: 'Nunito_400Regular' };
+(TextInput as any).defaultProps = (TextInput as any).defaultProps || {};
+(TextInput as any).defaultProps.style = { fontFamily: 'Nunito_400Regular' };
 
-    if (page === 'Carrinho') return <ScrollView style={styles.page} contentContainerStyle={{paddingBottom:110}}>
-      <Header title="Minha sacola"/>
-      {!cart.length ? <Empty title="Sua sacola está vazia" text="Encontre um brinquedo para começar a diversão." action="Explorar brinquedos" onPress={()=>goTab('Categorias')}/> : <>
-        {cart.map(i=><View key={i.product.id} style={styles.cartItem}><View style={styles.cartEmoji}><Text style={{fontSize:34}}>{i.product.image}</Text></View><View style={{flex:1}}><Text style={styles.productName}>{i.product.name}</Text><Text style={styles.price}>{money(i.product.price)}</Text><View style={styles.qty}><TouchableOpacity onPress={()=>changeQty(i.product.id,-1)}><Text style={styles.qtyText}>−</Text></TouchableOpacity><Text>{i.quantity}</Text><TouchableOpacity onPress={()=>changeQty(i.product.id,1)}><Text style={styles.qtyText}>＋</Text></TouchableOpacity></View></View><TouchableOpacity onPress={()=>setCart(old=>old.filter(x=>x.product.id!==i.product.id))}><Text style={{color:'#D76B73'}}>Remover</Text></TouchableOpacity></View>)}
-        <View style={styles.card}><Text style={styles.sectionTitle}>Cupom de desconto</Text><View style={styles.couponRow}><TextInput value={coupon} onChangeText={setCoupon} placeholder="Digite seu cupom" autoCapitalize="characters" style={[styles.input,{flex:1,marginBottom:0}]}/><TouchableOpacity style={styles.smallButton} onPress={()=>{if(coupon.trim().toUpperCase()==='FRETEGRATIS'){setAppliedCoupon('FRETEGRATIS');Alert.alert('Cupom aplicado','Você ganhou frete grátis!');}else{setAppliedCoupon('');Alert.alert('Cupom não reconhecido','Use FRETEGRATIS para testar o frete grátis.');}}}><Text style={styles.addButtonText}>Aplicar</Text></TouchableOpacity></View>
-        <SummaryRow label="Subtotal" value={money(subtotal)}/><SummaryRow label="Frete estimado" value={shipping===0?'Grátis':money(shipping)}/><Text style={styles.muted}>PR: R$ 15,00 · Outros estados: R$ 25,00</Text><Button label="Continuar para pagamento" onPress={startCheckout}/></View>
-      </>}
-    </ScrollView>;
-
-    if (page === 'Checkout') return <ScrollView style={styles.page} contentContainerStyle={{paddingBottom:100}}>
-      <Header title="Checkout" back/>
-      <View style={styles.card}><Text style={styles.sectionTitle}>📍 Endereço de entrega</Text>
-        <Field label="Nome completo" value={form.name} onChangeText={v=>updateForm('name',v)}/>
-        <Field label="E-mail para comprovante" value={form.email} keyboardType="email-address" onChangeText={v=>updateForm('email',v)}/>
-        <Field label="Telefone" value={form.phone} keyboardType="phone-pad" onChangeText={v=>updateForm('phone',v)}/>
-        <Field label="CEP" value={form.cep} keyboardType="numeric" onChangeText={v=>updateForm('cep',v)}/>
-        <Field label="Rua / Avenida" value={form.street} onChangeText={v=>updateForm('street',v)}/>
-        <View style={styles.twoCols}><View style={{flex:1}}><Field label="Número" value={form.number} onChangeText={v=>updateForm('number',v)}/></View><View style={{flex:1}}><Field label="Complemento" value={form.complement} onChangeText={v=>updateForm('complement',v)}/></View></View>
-        <Field label="Bairro" value={form.neighborhood} onChangeText={v=>updateForm('neighborhood',v)}/>
-        <View style={styles.twoCols}><View style={{flex:2}}><Field label="Cidade" value={form.city} onChangeText={v=>updateForm('city',v)}/></View><View style={{flex:1}}><Field label="Estado (UF)" value={form.state} onChangeText={v=>updateForm('state',v.toUpperCase())}/></View></View>
-        <Text style={styles.muted}>Frete calculado por estado: Paraná R$ 15,00; demais estados R$ 25,00. Cupom FRETEGRATIS isenta o frete.</Text>
-      </View>
-      <View style={styles.card}><Text style={styles.sectionTitle}>Forma de pagamento</Text>
-        {['Pix','Crédito','Débito'].map(m=><TouchableOpacity key={m} onPress={()=>setPayment(m)} style={[styles.paymentOption,payment===m&&styles.paymentSelected]}><Text style={{fontSize:20}}>{m==='Pix'?'▦':m==='Crédito'?'💳':'💳'}</Text><View style={{flex:1}}><Text style={styles.productName}>{m}</Text><Text style={styles.muted}>{m==='Pix'?'10% de desconto nos produtos':m==='Crédito'?'Até 3x sem juros; acima disso pode haver juros':'Pagamento à vista'}</Text></View><Text style={{color:BLUE,fontSize:20}}>{payment===m?'◉':'○'}</Text></TouchableOpacity>)}
-        {payment==='Crédito' && <View style={{marginTop:10}}><Text style={styles.fieldLabel}>Parcelamento</Text><View style={styles.rowWrap}>{[1,2,3,4,5,6,10,12].map(n=><TouchableOpacity key={n} onPress={()=>setInstallments(n)} style={[styles.filterChip,installments===n&&styles.filterActive]}><Text style={[styles.filterText,installments===n&&styles.filterTextActive]}>{n}x</Text></TouchableOpacity>)}</View><Text style={styles.muted}>Acima de 3x, esta demonstração calcula juros compostos de {(CARD_MONTHLY_RATE*100).toFixed(2)}% ao mês. Ajuste a taxa conforme o provedor de pagamento contratado.</Text></View>}
-      </View>
-      <View style={styles.card}><Text style={styles.sectionTitle}>Resumo do pedido</Text><SummaryRow label="Subtotal" value={money(subtotal)}/><SummaryRow label="Frete" value={shipping===0?'Grátis':money(shipping)}/>{payment==='Pix'&&<SummaryRow label="Desconto Pix (10%)" value={`− ${money(pixDiscount)}`} />}{interest>0&&<SummaryRow label="Juros estimados" value={money(interest)}/>}<View style={styles.totalRow}><Text style={styles.totalLabel}>Total</Text><Text style={styles.totalPrice}>{money(total)}</Text></View><Button label="Confirmar pedido" onPress={finishOrder}/><Text style={styles.tiny}>Protótipo: o pedido é registrado localmente, sem cobrança real.</Text></View>
-    </ScrollView>;
-
-    if (page === 'Concluído' && lastOrder) return <ScrollView style={styles.page} contentContainerStyle={{paddingBottom:100}}>
-      <View style={styles.success}><Text style={{fontSize:72}}>🎉</Text><Text style={styles.screenTitle}>Pedido realizado com sucesso!</Text><Text style={styles.mutedCenter}>Obrigado por comprar na Toy Mania.</Text></View>
-      <View style={styles.card}><Text style={styles.sectionTitle}>Comprovante do pedido</Text><SummaryRow label="Pedido" value={lastOrder.id}/><SummaryRow label="Data" value={lastOrder.date}/><SummaryRow label="Pagamento" value={lastOrder.payment}/><SummaryRow label="Total" value={money(lastOrder.total)}/><SummaryRow label="E-mail cadastrado" value={lastOrder.email}/><Text style={styles.muted}>O envio automático do comprovante por e-mail requer integração com backend ou serviço de e-mail.</Text><Button label="Acompanhar pedido" onPress={()=>setPage('Pedidos')}/><Button label="Voltar para o início" secondary onPress={()=>goTab('Início')}/></View>
-    </ScrollView>;
-
-    if (page === 'Pedidos') return <ScrollView style={styles.page} contentContainerStyle={{paddingBottom:100}}><Header title="Meus pedidos"/>
-      {!orders.length?<Empty title="Você ainda não tem pedidos" text="Seus pedidos e compras anteriores aparecerão aqui." action="Explorar brinquedos" onPress={()=>goTab('Categorias')}/>:orders.map(o=><View key={o.id} style={styles.card}><View style={styles.rowBetween}><Text style={styles.sectionTitle}>{o.id}</Text><Text style={styles.status}>{o.status}</Text></View><Text style={styles.muted}>Realizado em {o.date} · {o.items.length} item(ns)</Text>{o.items.map(i=><Text key={i.product.id} style={styles.body}>{i.product.image} {i.quantity}x {i.product.name}</Text>)}<SummaryRow label="Total" value={money(o.total)}/><Text style={styles.fieldLabel}>Rastreamento</Text><Text style={styles.body}>{o.tracking}</Text><Button label="Ver detalhes e rastreamento" secondary onPress={()=>Alert.alert('Rastreamento',`${o.id}\n${o.tracking}\n\nO rastreamento real depende da transportadora/API.`)}/></View>)}
-    </ScrollView>;
-
-    if (page === 'Perfil') return <ScrollView style={styles.page} contentContainerStyle={{paddingBottom:100}}><Header title="Meu perfil"/>
-      <View style={styles.profileHero}><View style={styles.avatar}><Text style={{fontSize:35}}>👤</Text></View><Text style={styles.screenTitle}>{profile.name||'Olá, visitante!'}</Text><Text style={styles.mutedCenter}>{profile.email||'Entre para guardar seus dados e pedidos'}</Text>{!logged&&<Button label="Entrar / Criar conta" onPress={()=>setPage('Login')}/>}</View>
-      <View style={styles.card}><Text style={styles.sectionTitle}>Minhas compras</Text><MenuRow icon="📦" title="Meus pedidos" detail={`${orders.length} pedido(s)`} onPress={()=>setPage('Pedidos')}/><MenuRow icon="♥" title="Lista de favoritos" detail={`${favorites.length} item(ns)`} onPress={()=>setPage('Favoritos')}/><MenuRow icon="⭐" title="Minhas avaliações" detail={`${reviews.length} avaliação(ões)`} onPress={()=>setPage('Avaliações')}/></View>
-      <View style={styles.card}><Text style={styles.sectionTitle}>Conta e preferências</Text><MenuRow icon="👤" title="Dados pessoais" detail="Nome, e-mail e telefone" onPress={()=>{setForm(profile);setPage('Dados pessoais');}}/><MenuRow icon="📍" title="Endereço de entrega" detail={profile.street?`${profile.city} - ${profile.state}`:'Adicionar endereço'} onPress={()=>{setForm(profile);setPage('Editar endereço');}}/><MenuRow icon="💳" title="Formas de pagamento" detail="Opções de pagamento disponíveis" onPress={()=>Alert.alert('Formas de pagamento','Pix, cartão de crédito e cartão de débito são demonstrados no checkout.')}/><MenuRow icon="🔔" title="Notificações" detail="Preferências de comunicação" onPress={()=>Alert.alert('Notificações','Preferências de notificação serão configuradas nesta etapa do projeto.')}/></View>
-      <View style={styles.card}><Text style={styles.sectionTitle}>Suporte e ajuda</Text><MenuRow icon="💬" title="Falar com atendimento" detail="Ajuda com seu pedido" onPress={()=>Alert.alert('Atendimento','Configure aqui o canal oficial de atendimento da loja.')}/><MenuRow icon="❓" title="Perguntas frequentes" detail="Compras, entrega e pagamentos" onPress={()=>setPage('Ajuda')}/><MenuRow icon="↩" title="Políticas de devolução e termos" detail="Consulte as condições da loja" onPress={()=>setPage('Ajuda')}/></View>
-      {logged&&<Button label="Sair da conta" secondary onPress={()=>Alert.alert('Sair da conta','Deseja sair deste perfil?', [{text:'Cancelar'},{text:'Sair',onPress:()=>{setLogged(false);setPage('Login');}}])}/>}
-    </ScrollView>;
-
-    if (page === 'Favoritos') return <ScrollView style={styles.page} contentContainerStyle={{paddingBottom:100}}><Header title="Meus favoritos" back/>{favorites.length ? <ProductGrid items={products.filter(p=>favorites.includes(p.id))}/> : <Empty title="Nenhum favorito ainda" text="Toque no coração de um brinquedo para salvá-lo aqui." action="Ver brinquedos" onPress={()=>goTab('Categorias')}/>}</ScrollView>;
-
-    if (page === 'Avaliar') return <ScrollView style={styles.page} contentContainerStyle={{paddingBottom:100}}><Header title="Avaliar produto" back/><View style={styles.card}><Text style={styles.sectionTitle}>Sua avaliação de {selected?.name}</Text><Text style={styles.fieldLabel}>Nota</Text><View style={styles.rowWrap}>{[1,2,3,4,5].map(n=><TouchableOpacity key={n} onPress={()=>setReviewStars(n)}><Text style={{fontSize:34,color:n<=reviewStars?YELLOW:'#C6D0DA'}}>★</Text></TouchableOpacity>)}</View><Text style={styles.fieldLabel}>Comentário</Text><TextInput value={reviewText} onChangeText={setReviewText} multiline placeholder="Conte como foi sua experiência..." style={[styles.input,{height:110,textAlignVertical:'top'}]}/><Button label="Salvar avaliação" onPress={()=>{if(!selected)return;setReviews(old=>[{productId:selected.id,stars:reviewStars,comment:reviewText},...old]);setReviewText('');setPage('Avaliações');Alert.alert('Avaliação salva','A avaliação foi salva neste dispositivo.');}}/></View></ScrollView>;
-
-    if (page === 'Avaliações') return <ScrollView style={styles.page} contentContainerStyle={{paddingBottom:100}}><Header title="Minhas avaliações" back/>{reviews.length?reviews.map((r,i)=><View key={`${r.productId}-${i}`} style={styles.card}><Text style={styles.sectionTitle}>{products.find(p=>p.id===r.productId)?.name||'Produto'}</Text><Text style={styles.rating}>{'★'.repeat(r.stars)}{'☆'.repeat(5-r.stars)}</Text><Text style={styles.body}>{r.comment||'Sem comentário.'}</Text></View>):<Empty title="Nenhuma avaliação" text="Você pode avaliar os produtos que experimentar." action="Explorar produtos" onPress={()=>goTab('Categorias')}/>}</ScrollView>;
-
-    if (page === 'Dados pessoais' || page === 'Editar endereço') {
-      const addressOnly = page === 'Editar endereço';
-      return <ScrollView style={styles.page} contentContainerStyle={{paddingBottom:100}}><Header title={page} back/><View style={styles.card}>
-        {!addressOnly&&<><Field label="Nome completo" value={form.name} onChangeText={v=>updateForm('name',v)}/><Field label="E-mail" value={form.email} keyboardType="email-address" onChangeText={v=>updateForm('email',v)}/><Field label="Telefone" value={form.phone} keyboardType="phone-pad" onChangeText={v=>updateForm('phone',v)}/></>}
-        {addressOnly&&<><Field label="CEP" value={form.cep} onChangeText={v=>updateForm('cep',v)}/><Field label="Rua / Avenida" value={form.street} onChangeText={v=>updateForm('street',v)}/><Field label="Número" value={form.number} onChangeText={v=>updateForm('number',v)}/><Field label="Complemento" value={form.complement} onChangeText={v=>updateForm('complement',v)}/><Field label="Bairro" value={form.neighborhood} onChangeText={v=>updateForm('neighborhood',v)}/><Field label="Cidade" value={form.city} onChangeText={v=>updateForm('city',v)}/><Field label="Estado (UF)" value={form.state} onChangeText={v=>updateForm('state',v.toUpperCase())}/></>}
-        <Button label="Salvar alterações" onPress={()=>{setProfile(form);setPage('Perfil');Alert.alert('Salvo','Seus dados foram atualizados neste dispositivo.');}}/>
-      </View></ScrollView>;
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean, error: Error | null }> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Erro capturado:", error, errorInfo);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorTitle}>Ops! Algo deu errado.</Text>
+          <Text style={styles.errorText}>{this.state.error?.message}</Text>
+        </View>
+      );
     }
-
-    if (page === 'Ajuda') return <ScrollView style={styles.page} contentContainerStyle={{paddingBottom:100}}><Header title="Suporte e ajuda" back/><View style={styles.card}><Text style={styles.sectionTitle}>Perguntas frequentes</Text><Text style={styles.faq}>Como acompanho meu pedido?</Text><Text style={styles.body}>Acesse Perfil → Meus pedidos. O protótipo mostra o status demonstrativo; para rastreio real será necessária integração com a transportadora.</Text><Text style={styles.faq}>Como funciona o frete?</Text><Text style={styles.body}>R$ 15,00 para endereços no Paraná e R$ 25,00 para os demais estados. O cupom FRETEGRATIS isenta o frete.</Text><Text style={styles.faq}>Como funciona o desconto no Pix?</Text><Text style={styles.body}>O checkout calcula 10% de desconto sobre o subtotal dos produtos.</Text><Text style={styles.faq}>Como solicitar devolução?</Text><Text style={styles.body}>Os termos oficiais da loja devem ser cadastrados antes de publicar o aplicativo.</Text></View></ScrollView>;
-
-    return <View style={styles.splash}><Text style={styles.screenTitle}>Toy Mania</Text><Button label="Voltar ao início" onPress={()=>goTab('Início')}/></View>;
-  };
-
-  const showTabs = ['Início','Categorias','Carrinho','Pedidos','Perfil'].includes(page);
-  return <SafeAreaView style={styles.app}><StatusBar barStyle="dark-content" backgroundColor={BG}/><View style={{flex:1}}>{renderPage()}</View>{showTabs&&<View style={styles.tabBar}>{[
-    ['Início','⌂'],['Categorias','▦'],['Carrinho','🛍'],['Pedidos','▤'],['Perfil','♙']
-  ].map(([name,icon])=><TouchableOpacity key={name} style={styles.tab} onPress={()=>goTab(name)}><Text style={[styles.tabIcon,{color:tab===name?BLUE: MUTED}]}>{icon}</Text><Text style={[styles.tabLabel,{color:tab===name?BLUE:MUTED}]}>{name}</Text></TouchableOpacity>)}</View>}</SafeAreaView>;
+    return this.props.children;
+  }
 }
 
-function SectionTitle({title,action,onPress}:{title:string;action:string;onPress:()=>void}) {
-  return <View style={styles.sectionHeader}><Text style={styles.sectionTitle}>{title}</Text>{!!action&&<TouchableOpacity onPress={onPress}><Text style={styles.link}>{action}</Text></TouchableOpacity>}</View>;
-}
-function SummaryRow({label,value}:{label:string;value:string}) {
-  return <View style={styles.summaryRow}><Text style={styles.muted}>{label}</Text><Text style={styles.summaryValue}>{value}</Text></View>;
-}
-function InfoRow({label,value}:{label:string;value:string}) {
-  return <View style={styles.infoRow}><Text style={styles.muted}>{label}</Text><Text style={styles.infoValue}>{value}</Text></View>;
-}
-function MenuRow({icon,title,detail,onPress}:{icon:string;title:string;detail:string;onPress:()=>void}) {
-  return <TouchableOpacity style={styles.menuRow} onPress={onPress}><Text style={styles.menuIcon}>{icon}</Text><View style={{flex:1}}><Text style={styles.productName}>{title}</Text><Text style={styles.muted}>{detail}</Text></View><Text style={{fontSize:22,color:'#A1B0BF'}}>›</Text></TouchableOpacity>;
-}
-function Empty({title,text,action,onPress}:{title:string;text:string;action:string;onPress:()=>void}) {
-  return <View style={styles.empty}><Text style={{fontSize:55}}>🧸</Text><Text style={styles.sectionTitle}>{title}</Text><Text style={styles.mutedCenter}>{text}</Text><TouchableOpacity style={styles.primaryButton} onPress={onPress}><Text style={styles.primaryButtonText}>{action}</Text></TouchableOpacity></View>;
+export default function App() {
+  const [fontsLoaded] = useFonts({
+    Nunito_400Regular,
+    Nunito_500Medium,
+    Nunito_700Bold,
+  });
+
+  if (!fontsLoaded) {
+    return <View style={{ flex: 1, backgroundColor: colors.background }} />;
+  }
+
+  return (
+    <SafeAreaProvider>
+      <StatusBar style="dark" />
+      <ErrorBoundary>
+        <AuthProvider>
+          <CartProvider>
+            <FavoritesProvider>
+              <OrderProvider>
+                <AppNavigator />
+              </OrderProvider>
+            </FavoritesProvider>
+          </CartProvider>
+        </AuthProvider>
+      </ErrorBoundary>
+    </SafeAreaProvider>
+  );
 }
 
 const styles = StyleSheet.create({
-  app:{flex:1,backgroundColor:BG}, page:{flex:1,backgroundColor:BG}, splash:{flex:1,backgroundColor:'#F2F8FF',alignItems:'center',justifyContent:'center',padding:28},
-  sparkle:{fontSize:23,color:YELLOW,marginBottom:12}, logo:{width:230,height:230,marginBottom:12}, splashTitle:{fontSize:30,fontWeight:'900',color:BLUE_DARK}, splashSubtitle:{fontSize:16,fontWeight:'700',color:BLUE,marginTop:5}, splashCopy:{textAlign:'center',color:MUTED,lineHeight:22,marginTop:12,marginBottom:25}, tiny:{fontSize:11,color:'#9BAABA',textAlign:'center',marginTop:12},
-  header:{height:58,backgroundColor:'#FFFFFF',paddingHorizontal:14,flexDirection:'row',alignItems:'center',gap:8,borderBottomWidth:1,borderBottomColor:'#EDF1F6'}, brandSmall:{backgroundColor:BLUE_LIGHT,borderRadius:12,paddingHorizontal:8,paddingVertical:5},brandText:{fontWeight:'900',fontSize:14,color:BLUE},headerTitle:{flex:1,fontSize:16,fontWeight:'800',color:'#304B63'},back:{fontSize:32,color:BLUE,width:20},searchIcon:{padding:6},cartIcon:{padding:6},cartCount:{position:'absolute',right:0,top:0,backgroundColor:YELLOW,color:BLUE_DARK,fontSize:10,fontWeight:'800',borderRadius:10,overflow:'hidden',paddingHorizontal:4},
-  searchBar:{margin:14,marginBottom:8,backgroundColor:'#FFFFFF',borderRadius:14,paddingHorizontal:14,height:45,flexDirection:'row',alignItems:'center',gap:10,borderWidth:1,borderColor:'#E6EDF4'},banner:{margin:14,marginTop:4,backgroundColor:'#75B7EB',borderRadius:20,padding:17,flexDirection:'row',alignItems:'center',overflow:'hidden'},bannerTag:{fontSize:10,fontWeight:'900',color:'#FFFFFF',marginBottom:6},bannerTitle:{fontSize:21,fontWeight:'900',color:'#FFFFFF',maxWidth:210},bannerSub:{fontSize:12,color:'#F5FAFF',marginVertical:7},primaryButton:{backgroundColor:BLUE_DARK,borderRadius:25,paddingVertical:13,paddingHorizontal:18,alignItems:'center',marginTop:10},primaryButtonText:{color:'#FFFFFF',fontWeight:'800',fontSize:14},secondaryButton:{backgroundColor:'#FFF4CC',borderWidth:1,borderColor:'#F6E4A5'},secondaryButtonText:{color:BLUE_DARK},sectionHeader:{marginHorizontal:15,marginTop:10,marginBottom:10,flexDirection:'row',alignItems:'center',justifyContent:'space-between'},sectionTitle:{fontSize:17,fontWeight:'900',color:'#304B63'},link:{color:BLUE,fontWeight:'700',fontSize:12,marginTop:12,marginBottom:8},categoryChip:{width:88,backgroundColor:'#FFFFFF',borderRadius:15,padding:10,alignItems:'center',borderWidth:1,borderColor:'#E9F0F7'},categoryText:{fontSize:11,color:'#52677B',fontWeight:'700',marginTop:5,textAlign:'center'},grid:{flexDirection:'row',flexWrap:'wrap',paddingHorizontal:9},gridItem:{width:'50%',padding:5},productCard:{backgroundColor:'#FFFFFF',borderRadius:16,padding:10,borderWidth:1,borderColor:'#E9EFF5',minHeight:285},productImage:{height:105,backgroundColor:'#F1F7FC',borderRadius:12,alignItems:'center',justifyContent:'center',marginBottom:9},badge:{position:'absolute',left:6,top:6,backgroundColor:'#FFF0BC',color:'#9A761B',fontSize:9,fontWeight:'800',borderRadius:8,paddingHorizontal:6,paddingVertical:4},heart:{position:'absolute',right:15,top:12,zIndex:1},productName:{fontSize:12,fontWeight:'800',color:'#344D63',lineHeight:17},rating:{fontSize:10,color:'#B68A1B',marginTop:4},price:{fontSize:15,fontWeight:'900',color:BLUE_DARK,marginTop:5},productMeta:{fontSize:9,color:MUTED,marginTop:4,minHeight:23},addButton:{backgroundColor:BLUE_LIGHT,borderRadius:12,alignItems:'center',paddingVertical:8,marginTop:8},addButtonText:{fontSize:11,fontWeight:'900',color:BLUE_DARK},badgeInline:{alignSelf:'flex-start',backgroundColor:BLUE_LIGHT,color:BLUE_DARK,padding:6,borderRadius:8,fontSize:11,fontWeight:'800'},filterChip:{paddingVertical:8,paddingHorizontal:12,borderRadius:18,backgroundColor:'#FFFFFF',borderWidth:1,borderColor:'#E1EAF2',marginRight:5,marginBottom:7},filterActive:{backgroundColor:BLUE,borderColor:BLUE},filterText:{fontSize:11,color:'#5C7184',fontWeight:'700'},filterTextActive:{color:'#FFFFFF'},rowWrap:{flexDirection:'row',flexWrap:'wrap',paddingHorizontal:14},muted:{fontSize:11,color:MUTED,lineHeight:17},formPage:{padding:18,paddingBottom:40,backgroundColor:BG},centerLogo:{alignItems:'center',marginTop:15},loginLogo:{width:145,height:145},screenTitle:{fontSize:23,fontWeight:'900',color:'#304B63',textAlign:'center',marginTop:10},mutedCenter:{textAlign:'center',fontSize:12,color:MUTED,lineHeight:18,marginTop:6,marginBottom:18},fieldLabel:{fontSize:12,fontWeight:'800',color:'#50677B',marginBottom:6},input:{backgroundColor:'#FFFFFF',borderWidth:1,borderColor:'#E0E8F0',borderRadius:12,paddingHorizontal:12,paddingVertical:11,color:'#344B60',fontSize:13,marginBottom:2},detailImage:{margin:14,height:240,borderRadius:20,backgroundColor:'#EAF5FF',alignItems:'center',justifyContent:'center'},detailHeart:{position:'absolute',right:16,top:15},detailCard:{marginHorizontal:14,padding:16,backgroundColor:'#FFFFFF',borderRadius:18,borderWidth:1,borderColor:'#E8EFF5'},detailTitle:{fontSize:22,fontWeight:'900',color:'#304B63',marginTop:10},detailPrice:{fontSize:24,fontWeight:'900',color:BLUE_DARK,marginTop:12},pixHint:{fontSize:12,color:'#3D966D',marginTop:4},body:{fontSize:13,color:'#52677B',lineHeight:20,marginVertical:8},infoRow:{borderTopWidth:1,borderTopColor:'#EEF2F6',paddingVertical:11,gap:4},infoValue:{fontSize:13,fontWeight:'700',color:'#344D63',marginTop:3},card:{backgroundColor:'#FFFFFF',borderRadius:17,padding:15,margin:12,borderWidth:1,borderColor:'#E7EEF5'},cartItem:{backgroundColor:'#FFFFFF',marginHorizontal:12,marginTop:10,padding:12,borderRadius:15,flexDirection:'row',alignItems:'center',gap:10},cartEmoji:{width:66,height:66,borderRadius:13,backgroundColor:BLUE_LIGHT,alignItems:'center',justifyContent:'center'},qty:{flexDirection:'row',alignItems:'center',gap:14,marginTop:8},qtyText:{fontSize:20,color:BLUE,fontWeight:'800'},couponRow:{flexDirection:'row',gap:8,alignItems:'center',marginVertical:10},smallButton:{backgroundColor:YELLOW,borderRadius:10,padding:12},summaryRow:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',paddingVertical:7,gap:10},summaryValue:{fontSize:12,fontWeight:'700',color:'#344D63',textAlign:'right',flexShrink:1},totalRow:{borderTopWidth:1,borderTopColor:'#E8EEF4',marginTop:7,paddingTop:12,flexDirection:'row',justifyContent:'space-between',alignItems:'center'},totalLabel:{fontSize:16,fontWeight:'900',color:'#304B63'},totalPrice:{fontSize:22,fontWeight:'900',color:BLUE_DARK},twoCols:{flexDirection:'row',gap:10},paymentOption:{flexDirection:'row',alignItems:'center',gap:10,padding:12,borderWidth:1,borderColor:'#E7EDF3',borderRadius:13,marginTop:8},paymentSelected:{borderColor:BLUE,backgroundColor:'#F0F8FF'},success:{alignItems:'center',padding:25,marginTop:15},status:{fontSize:10,color:'#3B8A63',backgroundColor:'#E5F7EC',padding:6,borderRadius:8,fontWeight:'800'},rowBetween:{flexDirection:'row',alignItems:'center',justifyContent:'space-between',gap:10},profileHero:{alignItems:'center',padding:20,backgroundColor:'#FFFFFF',margin:12,borderRadius:18},avatar:{width:72,height:72,borderRadius:36,backgroundColor:BLUE_LIGHT,alignItems:'center',justifyContent:'center'},menuRow:{flexDirection:'row',alignItems:'center',gap:12,paddingVertical:13,borderTopWidth:1,borderTopColor:'#EEF2F6'},menuIcon:{fontSize:21,width:28,textAlign:'center'},faq:{fontSize:14,fontWeight:'900',color:'#304B63',marginTop:14},empty:{alignItems:'center',padding:28,margin:14,backgroundColor:'#FFFFFF',borderRadius:18},tabBar:{height:64,backgroundColor:'#FFFFFF',borderTopWidth:1,borderTopColor:'#E8EEF4',flexDirection:'row',alignItems:'center',justifyContent:'space-around',paddingBottom:4},tab:{flex:1,alignItems:'center',justifyContent:'center'},tabIcon:{fontSize:21},tabLabel:{fontSize:10,fontWeight:'700',marginTop:3},
-}); 
+  errorContainer: { flex: 1, backgroundColor: colors.background, alignItems: 'center', justifyContent: 'center', padding: 20 },
+  errorTitle: { fontSize: 20, fontWeight: 'bold', color: colors.error, marginBottom: 10 },
+  errorText: { fontSize: 14, color: colors.text, textAlign: 'center' },
+});
