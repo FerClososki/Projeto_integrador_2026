@@ -55,6 +55,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     setItems((prev) => {
       const existing = prev.find((item) => item.product.id === product.id);
       if (existing) {
+        if (existing.quantity >= 5) {
+          alert('Você só pode adicionar 5 unidades deste produto.');
+          return prev;
+        }
         return prev.map((item) =>
           item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item
         );
@@ -69,6 +73,10 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
 
   const updateQuantity = (productId: string, quantity: number) => {
     if (quantity <= 0) return removeFromCart(productId);
+    if (quantity > 5) {
+      alert('Máximo de 5 unidades por produto.');
+      return;
+    }
     setItems((prev) =>
       prev.map((item) => (item.product.id === productId ? { ...item, quantity } : item))
     );

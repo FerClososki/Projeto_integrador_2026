@@ -1,7 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet, I18nManager } from 'react-native';
 import { useFonts, Nunito_400Regular, Nunito_500Medium, Nunito_700Bold } from '@expo-google-fonts/nunito';
 
 import { AuthProvider } from './src/context/AuthContext';
@@ -10,6 +10,10 @@ import { FavoritesProvider } from './src/context/FavoritesContext';
 import { OrderProvider } from './src/context/OrderContext';
 import { AppNavigator } from './src/navigation/AppNavigator';
 import { colors } from './src/theme/colors';
+
+// Força o app a usar o português e evita textos em inglês herdados do sistema
+I18nManager.allowRTL(false);
+I18nManager.forceRTL(false);
 
 // Força a fonte Nunito em todos os textos do app
 (Text as any).defaultProps = (Text as any).defaultProps || {};

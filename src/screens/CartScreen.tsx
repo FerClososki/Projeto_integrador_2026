@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, Pressable } from 'react-native';
+import { View, Text, StyleSheet, FlatList, Image, Pressable, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CartContext } from '../context/CartContext';
 import { PrimaryButton } from '../components/PrimaryButton';
@@ -8,6 +8,27 @@ import { formatCurrency } from '../utils/currency';
 
 export function CartScreen({ navigation }: any) {
   const { items, updateQuantity, removeFromCart, subtotal, shipping, total } = useContext(CartContext);
+
+  // Confirmação de exclusão
+  const handleRemoveItem = (productId: string, productName: string) => {
+    Alert.alert(
+      'Remover item',
+      `Deseja realmente excluir "${productName}" da sua sacola?`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Excluir', style: 'destructive', onPress: () => removeFromCart(productId) }
+      ]
+    );
+  };
+
+  // Aumenta a quantidade com limite de 5
+  const handleIncreaseQuantity = (productId: string, currentQuantity: number) => {
+    if (currentQuantity >= 5) {
+      Alert.alert('Limite atingido', 'Você só pode adicionar até 5 unidades do mesmo produto.');
+      return;
+    }
+    updateQuantity(productId, currentQuantity + 1);
+  };
 
   if (items.length === 0) {
     return (
@@ -36,7 +57,7 @@ export function CartScreen({ navigation }: any) {
             <View style={styles.itemDetails}>
               <Text style={styles.itemName} numberOfLines={2}>{item.product.name}</Text>
               
-              {/* AQUI ESTÁ A CORREÇÃO: Multiplicando o preço pela quantidade */}
+              {/* Multiplicando o preço pela quantidade */}
               <Text style={styles.itemPrice}>
                 {formatCurrency(item.product.price * item.quantity)}
               </Text>
@@ -46,10 +67,15 @@ export function CartScreen({ navigation }: any) {
                   <Ionicons name="remove-circle-outline" size={26} color={colors.primary} />
                 </Pressable>
                 <Text style={styles.quantityText}>{item.quantity}</Text>
-                <Pressable onPress={() => updateQuantity(item.product.id, item.quantity + 1)}>
-                  <Ionicons name="add-circle-outline" size={26} color={colors.primary} />
+                <Pressable onPress={() => handleIncreaseQuantity(item.product.id, item.quantity)}>
+                  <Ionicons name="add-circle-outline" size={26} color={item.quantity >= 5 ? colors.textLight : colors.primary} />
                 </Pressable>
-                <Pressable onPress={() => removeFromCart(item.product.id)} style={{ marginLeft: 'auto' }}>
+                
+                {/* Lixeira com confirmação */}
+                <Pressable 
+                  onPress={() => handleRemoveItem(item.product.id, item.product.name)} 
+                  style={{ marginLeft: 'auto' }}
+                >
                   <Ionicons name="trash-outline" size={24} color={colors.error} />
                 </Pressable>
               </View>

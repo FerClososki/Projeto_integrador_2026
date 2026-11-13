@@ -12,25 +12,51 @@ const Tab = createBottomTabNavigator();
 
 export function TabNavigator() {
   return (
-    <Tab.Navigator screenOptions={({ route }) => ({
-      headerShown: false,
-      tabBarActiveTintColor: colors.primary,
-      tabBarInactiveTintColor: colors.textLight,
-      tabBarIcon: ({ color, size, focused }) => {
-        let iconName: any = 'circle';
-        if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
-        else if (route.name === 'Categories') iconName = focused ? 'grid' : 'grid-outline';
-        else if (route.name === 'Cart') iconName = focused ? 'bag-handle' : 'bag-handle-outline';
-        else if (route.name === 'Orders') iconName = focused ? 'receipt' : 'receipt-outline';
-        else if (route.name === 'Profile') iconName = focused ? 'person' : 'person-outline';
-        return <Ionicons name={iconName} size={size} color={color} />;
-      },
-    })}>
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Categories" component={CategoriesScreen} />
-      <Tab.Screen name="Cart" component={CartScreen} />
-      <Tab.Screen name="Orders" component={OrdersScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+    <Tab.Navigator 
+      screenOptions={({ route }) => ({
+        headerShown: false,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textLight,
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, height: 60, paddingBottom: 8 },
+        tabBarIcon: ({ color, size, focused }) => {
+          let iconName: any;
+          switch (route.name) {
+            case 'Home': iconName = focused ? 'home' : 'home-outline'; break;
+            case 'Categories': iconName = focused ? 'grid' : 'grid-outline'; break;
+            case 'Cart': iconName = focused ? 'bag-handle' : 'bag-handle-outline'; break;
+            case 'Orders': iconName = focused ? 'receipt' : 'receipt-outline'; break;
+            case 'Profile': iconName = focused ? 'person' : 'person-outline'; break;
+            default: iconName = 'circle';
+          }
+          return <Ionicons name={iconName} size={size} color={color} />;
+        },
+      })}
+    >
+      <Tab.Screen 
+        name="Home" 
+        component={HomeScreen} 
+        options={{ tabBarLabel: 'Início' }} 
+      />
+      <Tab.Screen 
+        name="Categories" 
+        component={CategoriesScreen} 
+        options={{ tabBarLabel: 'Categorias' }} 
+      />
+      <Tab.Screen 
+        name="Cart" 
+        component={CartScreen} 
+        options={{ tabBarLabel: 'Sacola' }} 
+      />
+      <Tab.Screen 
+        name="Orders" 
+        component={OrdersScreen} 
+        options={{ tabBarLabel: 'Pedidos' }} 
+      />
+      <Tab.Screen 
+        name="Profile" 
+        component={ProfileScreen} 
+        options={{ tabBarLabel: 'Perfil' }} 
+      />
     </Tab.Navigator>
   );
 }

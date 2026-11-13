@@ -21,9 +21,14 @@ export function ProductCard({ product, onPress, variant = 'default' }: Props) {
   const { addToCart } = useContext(CartContext);
   const favorite = isFavorite(product.id);
 
-  // Calcula a largura do card dinamicamente com base no número de colunas
   const numColumns = getNumColumns();
-  const cardWidth = variant === 'compact' ? 140 : (width - spacing.md * (numColumns + 1)) / numColumns;
+  
+  // Cálculo exato: Largura da tela - (Padding da tela * 2) - (Espaçamento entre cards * (colunas - 1))
+  const horizontalPadding = spacing.md * 2;
+  const cardSpacing = spacing.sm; 
+  
+  const availableWidth = width - horizontalPadding - (cardSpacing * (numColumns - 1));
+  const cardWidth = variant === 'compact' ? 140 : availableWidth / numColumns;
 
   return (
     <Pressable style={[styles.card, { width: cardWidth }]} onPress={onPress}>

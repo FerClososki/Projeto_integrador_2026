@@ -1,10 +1,12 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CartContext } from '../context/CartContext';
 import { OrderContext } from '../context/OrderContext';
 import { AuthContext } from '../context/AuthContext';
 import { PrimaryButton } from '../components/PrimaryButton';
+import { ScreenHeader } from '../components/ScreenHeader';
+import { storageService } from '../services/storageService';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
@@ -12,7 +14,7 @@ import { formatCurrency } from '../utils/currency';
 import { Order } from '../types';
 
 export function CheckoutScreen({ navigation }: any) {
-  const { items, subtotal, clearCart } = useContext(CartContext);
+  const { items, subtotal, clearCart, coupon, applyCoupon, removeCoupon } = useContext(CartContext);
   const { addOrder } = useContext(OrderContext);
   const { user } = useContext(AuthContext);
 
@@ -21,10 +23,42 @@ export function CheckoutScreen({ navigation }: any) {
   });
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'credit' | 'debit'>('pix');
   const [isLoading, setIsLoading] = useState(false);
+  const [couponCode, setCouponCode] = useState('');
+  const [couponError, setCouponError] = useState('');
+
+  // Carrega o endereço salvo no perfil do usuário
+  useEffect(() => {
+    async function loadSavedAddress() {
+      if (!user) return;
+      const saved = await storageService.getItem<any>(`@ToyMania:address:${user.id}`);
+      if (saved) {
+        setAddress({
+          street: saved.street || '',
+          number: saved.number || '',
+          neighborhood: saved.neighborhood || '',
+          city: saved.city || '',
+          state: saved.state || 'PR',
+          zipCode: saved.zipCode || '',
+        });
+      }
+    }
+    loadSavedAddress();
+  }, [user]);
 
   const discount = paymentMethod === 'pix' ? subtotal * 0.10 : 0;
-  const shipping = address.state.toUpperCase() === 'PR' ? 15.00 : 25.00;
+  const freeShipping = coupon?.freeShipping && subtotal >= 100;
+  const shipping = freeShipping ? 0 : (address.state.toUpperCase() === 'PR' ? 15.00 : 25.00);
   const total = subtotal + shipping - discount;
+
+  const handleApplyCoupon = () => {
+    const success = applyCoupon(couponCode);
+    if (!success) {
+      setCouponError('Cupom inválido.');
+    } else {
+      setCouponError('');
+      setCouponCode('');
+    }
+  };
 
   const handleConfirmOrder = async () => {
     if (!address.street || !address.number || !address.city) {
@@ -53,71 +87,96 @@ export function CheckoutScreen({ navigation }: any) {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <View style={styles.header}>
-        <Pressable onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={colors.text} />
-        </Pressable>
-        <Text style={styles.headerTitle}>Finalizar Compra</Text>
-        <View style={{ width: 24 }} />
-      </View>
-
-      <Text style={styles.sectionTitle}>Endereço de Entrega</Text>
-      <View style={styles.card}>
-        <TextInput style={styles.input} placeholder="Rua / Avenida" value={address.street} onChangeText={(t) => setAddress({...address, street: t})} />
-        <View style={styles.row}>
-          <TextInput style={[styles.input, { flex: 1, marginRight: spacing.sm }]} placeholder="Número" value={address.number} onChangeText={(t) => setAddress({...address, number: t})} keyboardType="numeric" />
-          <TextInput style={[styles.input, { flex: 1 }]} placeholder="Bairro" value={address.neighborhood} onChangeText={(t) => setAddress({...address, neighborhood: t})} />
-        </View>
-        <View style={styles.row}>
-          <TextInput style={[styles.input, { flex: 1, marginRight: spacing.sm }]} placeholder="Cidade" value={address.city} onChangeText={(t) => setAddress({...address, city: t})} />
-          <TextInput style={[styles.input, { width: 80 }]} placeholder="UF" value={address.state} onChangeText={(t) => setAddress({...address, state: t.toUpperCase()})} maxLength={2} autoCapitalize="characters" />
-        </View>
-        <TextInput style={styles.input} placeholder="CEP" value={address.zipCode} onChangeText={(t) => setAddress({...address, zipCode: t})} keyboardType="numeric" />
-      </View>
-
-      <Text style={styles.sectionTitle}>Forma de Pagamento</Text>
-      <View style={styles.card}>
-        <Pressable style={[styles.paymentOption, paymentMethod === 'pix' && styles.paymentOptionActive]} onPress={() => setPaymentMethod('pix')}>
-          <Ionicons name="qr-code-outline" size={24} color={paymentMethod === 'pix' ? colors.primary : colors.textLight} />
-          <View style={styles.paymentInfo}>
-            <Text style={styles.paymentTitle}>Pix</Text>
-            <Text style={styles.paymentDiscount}>10% de desconto</Text>
+    <View style={styles.container}>
+      <ScreenHeader title="Finalizar Compra" onBack={() => navigation.goBack()} />
+      
+      <ScrollView contentContainerStyle={styles.content}>
+        <Text style={styles.sectionTitle}>Endereço de Entrega</Text>
+        <View style={styles.card}>
+          <TextInput style={styles.input} placeholder="Rua / Avenida" value={address.street} onChangeText={(t) => setAddress({...address, street: t})} />
+          <View style={styles.row}>
+            <TextInput style={[styles.input, { flex: 1, marginRight: spacing.sm }]} placeholder="Número" value={address.number} onChangeText={(t) => setAddress({...address, number: t})} keyboardType="numeric" />
+            <TextInput style={[styles.input, { flex: 1 }]} placeholder="Bairro" value={address.neighborhood} onChangeText={(t) => setAddress({...address, neighborhood: t})} />
           </View>
-          <Ionicons name={paymentMethod === 'pix' ? 'radio-button-on' : 'radio-button-off'} size={20} color={colors.primary} />
-        </Pressable>
-
-        <Pressable style={[styles.paymentOption, paymentMethod === 'credit' && styles.paymentOptionActive]} onPress={() => setPaymentMethod('credit')}>
-          <Ionicons name="card-outline" size={24} color={paymentMethod === 'credit' ? colors.primary : colors.textLight} />
-          <View style={styles.paymentInfo}>
-            <Text style={styles.paymentTitle}>Cartão de Crédito</Text>
-            <Text style={styles.paymentSubtitle}>Em até 3x sem juros</Text>
+          <View style={styles.row}>
+            <TextInput style={[styles.input, { flex: 1, marginRight: spacing.sm }]} placeholder="Cidade" value={address.city} onChangeText={(t) => setAddress({...address, city: t})} />
+            <TextInput style={[styles.input, { width: 80 }]} placeholder="UF" value={address.state} onChangeText={(t) => setAddress({...address, state: t.toUpperCase()})} maxLength={2} autoCapitalize="characters" />
           </View>
-          <Ionicons name={paymentMethod === 'credit' ? 'radio-button-on' : 'radio-button-off'} size={20} color={colors.primary} />
-        </Pressable>
-      </View>
-
-      <Text style={styles.sectionTitle}>Resumo do Pedido</Text>
-      <View style={styles.card}>
-        <View style={styles.summaryRow}><Text style={styles.summaryLabel}>Produtos</Text><Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text></View>
-        <View style={styles.summaryRow}><Text style={styles.summaryLabel}>Frete ({address.state})</Text><Text style={styles.summaryValue}>{formatCurrency(shipping)}</Text></View>
-        {discount > 0 && <View style={styles.summaryRow}><Text style={styles.summaryLabelDiscount}>Desconto Pix</Text><Text style={styles.summaryValueDiscount}>- {formatCurrency(discount)}</Text></View>}
-        <View style={[styles.summaryRow, { marginTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.sm }]}>
-          <Text style={styles.summaryTotalLabel}>Total</Text>
-          <Text style={styles.summaryTotalValue}>{formatCurrency(total)}</Text>
+          <TextInput style={styles.input} placeholder="CEP" value={address.zipCode} onChangeText={(t) => setAddress({...address, zipCode: t})} keyboardType="numeric" />
         </View>
-      </View>
 
-      <PrimaryButton title={isLoading ? "Processando..." : "Confirmar Pedido"} onPress={handleConfirmOrder} isLoading={isLoading} />
-    </ScrollView>
+        <Text style={styles.sectionTitle}>Forma de Pagamento</Text>
+        <View style={styles.card}>
+          <Pressable style={[styles.paymentOption, paymentMethod === 'pix' && styles.paymentOptionActive]} onPress={() => setPaymentMethod('pix')}>
+            <Ionicons name="qr-code-outline" size={24} color={paymentMethod === 'pix' ? colors.primary : colors.textLight} />
+            <View style={styles.paymentInfo}>
+              <Text style={styles.paymentTitle}>Pix</Text>
+              <Text style={styles.paymentDiscount}>10% de desconto</Text>
+            </View>
+            <Ionicons name={paymentMethod === 'pix' ? 'radio-button-on' : 'radio-button-off'} size={20} color={colors.primary} />
+          </Pressable>
+
+          <Pressable style={[styles.paymentOption, paymentMethod === 'credit' && styles.paymentOptionActive]} onPress={() => setPaymentMethod('credit')}>
+            <Ionicons name="card-outline" size={24} color={paymentMethod === 'credit' ? colors.primary : colors.textLight} />
+            <View style={styles.paymentInfo}>
+              <Text style={styles.paymentTitle}>Cartão de Crédito</Text>
+              <Text style={styles.paymentSubtitle}>Em até 3x sem juros</Text>
+            </View>
+            <Ionicons name={paymentMethod === 'credit' ? 'radio-button-on' : 'radio-button-off'} size={20} color={colors.primary} />
+          </Pressable>
+        </View>
+
+        <Text style={styles.sectionTitle}>Cupom de Desconto</Text>
+        <View style={styles.card}>
+          {!coupon ? (
+            <>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <TextInput 
+                  style={[styles.input, { flex: 1, marginBottom: 0 }]} 
+                  placeholder="Digite o cupom" 
+                  value={couponCode} 
+                  onChangeText={setCouponCode} 
+                  autoCapitalize="characters" 
+                />
+                <Pressable 
+                  style={{ backgroundColor: colors.primary, padding: 10, borderRadius: 8, marginLeft: 8 }} 
+                  onPress={handleApplyCoupon}
+                >
+                  <Text style={{ color: '#FFF', fontWeight: 'bold' }}>Aplicar</Text>
+                </Pressable>
+              </View>
+              {couponError ? <Text style={{ color: colors.error, marginTop: 5 }}>{couponError}</Text> : null}
+            </>
+          ) : (
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ color: colors.primary, fontWeight: 'bold' }}>Cupom {coupon.code} aplicado!</Text>
+              <Pressable onPress={removeCoupon}>
+                <Ionicons name="close-circle" size={22} color={colors.error} />
+              </Pressable>
+            </View>
+          )}
+        </View>
+
+        <Text style={styles.sectionTitle}>Resumo do Pedido</Text>
+        <View style={styles.card}>
+          <View style={styles.summaryRow}><Text style={styles.summaryLabel}>Produtos</Text><Text style={styles.summaryValue}>{formatCurrency(subtotal)}</Text></View>
+          <View style={styles.summaryRow}><Text style={styles.summaryLabel}>Frete ({address.state})</Text><Text style={styles.summaryValue}>{freeShipping ? 'Grátis' : formatCurrency(shipping)}</Text></View>
+          {discount > 0 && <View style={styles.summaryRow}><Text style={styles.summaryLabelDiscount}>Desconto Pix</Text><Text style={styles.summaryValueDiscount}>- {formatCurrency(discount)}</Text></View>}
+          <View style={[styles.summaryRow, { marginTop: spacing.sm, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.sm }]}>
+            <Text style={styles.summaryTotalLabel}>Total</Text>
+            <Text style={styles.summaryTotalValue}>{formatCurrency(total)}</Text>
+          </View>
+        </View>
+
+        <PrimaryButton title={isLoading ? "Processando..." : "Confirmar Pedido"} onPress={handleConfirmOrder} isLoading={isLoading} />
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.md, paddingBottom: spacing.xl },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.lg },
-  headerTitle: { fontSize: typography.sizes.lg, fontWeight: 'bold', color: colors.text },
   sectionTitle: { fontSize: typography.sizes.md, fontWeight: 'bold', color: colors.text, marginBottom: spacing.sm, marginTop: spacing.sm },
   card: { backgroundColor: colors.surface, padding: spacing.md, borderRadius: spacing.borderRadius.md, marginBottom: spacing.md },
   input: { height: 44, borderBottomWidth: 1, borderBottomColor: colors.border, marginBottom: spacing.sm, fontSize: typography.sizes.md, color: colors.text },

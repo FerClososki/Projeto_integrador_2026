@@ -1,6 +1,7 @@
 import React, { useState, useContext } from 'react';
 import { View, Text, ScrollView, StyleSheet, FlatList, Pressable, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 import { AppHeader } from '../components/AppHeader';
 import { SearchBar } from '../components/SearchBar';
 import { ProductCard } from '../components/ProductCard';
@@ -26,6 +27,11 @@ export function HomeScreen({ navigation }: any) {
     }
   };
 
+  const handleCopyCoupon = async (code: string) => {
+    await Clipboard.setStringAsync(code);
+    alert(`Cupom ${code} copiado! Cole na tela de pagamento.`);
+  };
+
   return (
     <View style={styles.container}>
       <AppHeader onOpenCart={() => navigation.navigate('Cart')} />
@@ -40,11 +46,11 @@ export function HomeScreen({ navigation }: any) {
           />
         </View>
 
-                {/* Banner Promocional */}
+        {/* Banner Promocional */}
         <View style={styles.banner}>
           <View style={styles.bannerContent}>
             <Text style={styles.bannerTitle}>Até 40% OFF em{'\n'}Brinquedos Educativos</Text>
-            <Pressable style={styles.bannerButton} onPress={() => navigation.navigate('Categories')}>
+            <Pressable style={styles.bannerButton} onPress={() => navigation.navigate('Categories', { categoryId: '5' })}>
               <Text style={styles.bannerButtonText}>Aproveitar</Text>
             </Pressable>
           </View>
@@ -134,6 +140,9 @@ export function HomeScreen({ navigation }: any) {
                 <Text style={styles.couponCode}>{coupon.code}</Text>
                 <Text style={styles.couponDesc}>{coupon.description}</Text>
               </View>
+              <Pressable onPress={() => handleCopyCoupon(coupon.code)} style={{ padding: spacing.xs }}>
+                <Ionicons name="copy-outline" size={22} color={colors.primary} />
+              </Pressable>
             </View>
           ))}
         </ScrollView>
@@ -162,7 +171,7 @@ const styles = StyleSheet.create({
   bannerTitle: { fontSize: typography.sizes.lg, fontWeight: 'bold', color: '#FFF', marginBottom: spacing.sm },
   bannerButton: { backgroundColor: colors.secondary, paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: spacing.borderRadius.pill, alignSelf: 'flex-start' },
   bannerButtonText: { color: colors.text, fontWeight: 'bold', fontSize: typography.sizes.sm },
-  bannerImage: {width: 100, height: 100, borderRadius: 50, marginLeft: spacing.sm, borderWidth: 3, borderColor: '#FFF'},
+  bannerImage: { width: 100, height: 100, borderRadius: 50, marginLeft: spacing.sm, borderWidth: 3, borderColor: '#FFF' },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: spacing.md, marginTop: spacing.lg, marginBottom: spacing.sm },
   sectionTitle: { fontSize: typography.sizes.lg, fontWeight: 'bold', color: colors.text },
   seeAll: { fontSize: typography.sizes.sm, color: colors.primary, fontWeight: '500' },
@@ -171,8 +180,7 @@ const styles = StyleSheet.create({
   categoryIcon: { width: 60, height: 60, borderRadius: 30, backgroundColor: colors.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: spacing.xs },
   categoryName: { fontSize: typography.sizes.xs, textAlign: 'center', color: colors.text },
   couponCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.surface, padding: spacing.md, borderRadius: spacing.borderRadius.md, marginRight: spacing.md, borderWidth: 1, borderColor: colors.secondary },
-  couponInfo: { marginLeft: spacing.sm },
+  couponInfo: { marginLeft: spacing.sm, flex: 1 },
   couponCode: { fontSize: typography.sizes.sm, fontWeight: 'bold', color: colors.primary },
   couponDesc: { fontSize: typography.sizes.xs, color: colors.textLight, maxWidth: 180 },
-
 });
