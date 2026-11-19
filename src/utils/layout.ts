@@ -14,9 +14,9 @@ export const moderateScale = (size: number, factor = 0.5) => {
 };
 
 export const getNumColumns = () => {
-  if (width >= 1024) return 4; // Tablets grandes
-  if (width >= 768) return 3;  // Galaxy Tab Active 3 (800dp) cai aqui
-  return 2;                     // Celulares
+  if (width >= 1024) return 4;
+  if (width >= 768) return 3;
+  return 2;
 };
 
 export { width, height };

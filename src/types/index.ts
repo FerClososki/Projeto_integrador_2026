@@ -8,7 +8,7 @@ export interface Product {
   ageRecommendation: string;
   material: string;
   pieces?: number;
-  image: string;
+  image: any; // <-- Mudou de string para any para aceitar imagens locais
   rating: number;
   reviewsCount: number;
 }
@@ -42,6 +42,14 @@ export interface Address {
   zipCode: string;
 }
 
+export interface SavedPaymentMethod {
+  id: string;
+  provider: 'demo';
+  brand: 'Visa' | 'Mastercard';
+  lastFour: string;
+  isDefault: boolean;
+}
+
 export interface Coupon {
   code: string;
   discountPercentage?: number;
@@ -55,6 +63,7 @@ export interface Order {
   items: CartItem[];
   total: number;
   paymentMethod: 'pix' | 'credit' | 'debit';
-  status: 'pending' | 'paid' | 'shipped' | 'delivered';
+  paymentMethodLabel?: string;
+  status: 'pending' | 'confirmed' | 'paid' | 'shipped' | 'delivered';
   address: Address;
 }

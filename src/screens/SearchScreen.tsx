@@ -11,6 +11,7 @@ import { getNumColumns } from '../utils/layout';
 export function SearchScreen({ navigation, route }: any) {
   const initialQuery = route.params?.query || '';
   const [search, setSearch] = useState(initialQuery);
+  const numColumns = getNumColumns();
 
   // Busca por nome E categoria
   const results = products.filter(p => 
@@ -37,11 +38,11 @@ export function SearchScreen({ navigation, route }: any) {
         <FlatList
           data={results}
           keyExtractor={(item) => item.id}
-          numColumns={getNumColumns()}
+          numColumns={numColumns}
           columnWrapperStyle={styles.row}
           contentContainerStyle={styles.list}
           renderItem={({ item }) => (
-            <View style={{ flex: 1, marginBottom: spacing.md }}>
+            <View style={{ width: `${100 / numColumns}%`, marginBottom: spacing.md }}>
               <ProductCard 
                 product={item} 
                 onPress={() => navigation.navigate('ProductDetails', { productId: item.id })} 
@@ -58,7 +59,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   searchContainer: { padding: spacing.md, backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
   list: { padding: spacing.md },
-  row: { justifyContent: 'space-between', marginHorizontal: spacing.xs },
+  row: { justifyContent: 'flex-start', marginHorizontal: spacing.xs },
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
   emptyTitle: { fontSize: 24, fontWeight: 'bold', color: colors.text, marginBottom: spacing.sm },
   emptySubtitle: { fontSize: 16, color: colors.textLight, textAlign: 'center' },

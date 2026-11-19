@@ -53,7 +53,7 @@ export function CartScreen({ navigation }: any) {
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
           <View style={styles.cartItem}>
-            <Image source={{ uri: item.product.image }} style={styles.itemImage} />
+            <Image source={item.product.image} style={styles.itemImage} />
             <View style={styles.itemDetails}>
               <Text style={styles.itemName} numberOfLines={2}>{item.product.name}</Text>
               

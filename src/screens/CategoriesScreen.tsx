@@ -14,26 +14,21 @@ export function CategoriesScreen({ navigation, route }: any) {
   const [search, setSearch] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
 
-  // ESSA PARTE É A CHAVE: Recebe o categoryId enviado pela Home
   useEffect(() => {
     if (route.params?.categoryId) {
       setSelectedCategoryId(route.params.categoryId);
     }
   }, [route.params]);
 
-  // Descobre o nome da categoria baseado no ID
   const selectedCategoryName = selectedCategoryId 
     ? categories.find(c => c.id === selectedCategoryId)?.name 
     : null;
 
   const filteredProducts = products.filter(p => {
     const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
-    
-    // Filtra pelo NOME da categoria
     const matchesCategory = selectedCategoryName 
       ? p.category.trim() === selectedCategoryName.trim() 
       : true;
-
     return matchesSearch && matchesCategory;
   });
 
@@ -80,10 +75,12 @@ export function CategoriesScreen({ navigation, route }: any) {
           </View>
         }
         renderItem={({ item }) => (
-          <ProductCard 
-            product={item} 
-            onPress={() => navigation.navigate('ProductDetails', { productId: item.id })} 
-          />
+          <View style={{ width: `${100 / numColumns}%` }}>
+            <ProductCard
+              product={item}
+              onPress={() => navigation.navigate('ProductDetails', { productId: item.id })}
+            />
+          </View>
         )}
       />
     </View>
@@ -100,7 +97,7 @@ const styles = StyleSheet.create({
   filterText: { fontSize: typography.sizes.sm, color: colors.textLight },
   filterTextActive: { color: '#FFF', fontWeight: 'bold' },
   list: { padding: spacing.md, paddingBottom: spacing.xl },
-  row: { justifyContent: 'flex-start', gap: spacing.sm },
+  row: { justifyContent: 'flex-start' },
   emptyContainer: { padding: spacing.xl, alignItems: 'center' },
   empty: { textAlign: 'center', color: colors.textLight, fontSize: 16 },
 });

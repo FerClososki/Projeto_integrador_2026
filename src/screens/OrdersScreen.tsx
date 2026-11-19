@@ -39,7 +39,7 @@ export function OrdersScreen() {
             <View style={styles.orderFooter}>
               <Text style={styles.orderTotal}>{formatCurrency(item.total)}</Text>
               <View style={styles.statusBadge}>
-                <Text style={styles.statusText}>Pago</Text>
+                <Text style={styles.statusText}>{item.status === 'confirmed' ? 'Confirmado' : item.status === 'pending' ? 'Pendente' : 'Pago'}</Text>
               </View>
             </View>
           </View>

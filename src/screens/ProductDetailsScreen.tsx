@@ -32,8 +32,8 @@ export function ProductDetailsScreen({ route, navigation }: any) {
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <View style={styles.imageContainer}>
-          <Image source={{ uri: product.image }} style={styles.image} resizeMode="cover" />
-          
+          <Image source={product.image} style={styles.image} resizeMode="contain" />
+
           <Pressable style={styles.favoriteButton} onPress={() => toggleFavorite(product)}>
             <Ionicons name={favorite ? 'heart' : 'heart-outline'} size={28} color={favorite ? colors.error : colors.textLight} />
           </Pressable>
@@ -45,7 +45,7 @@ export function ProductDetailsScreen({ route, navigation }: any) {
 
         <View style={styles.content}>
           <Text style={styles.name}>{product.name}</Text>
-          
+
           <View style={styles.ratingRow}>
             <Ionicons name="star" size={16} color={colors.secondary} />
             <Text style={styles.ratingText}>{product.rating} ({product.reviewsCount} avaliações)</Text>
@@ -94,7 +94,7 @@ export function ProductDetailsScreen({ route, navigation }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   scroll: { paddingBottom: 100 },
-  imageContainer: { position: 'relative', height: 300, backgroundColor: colors.primaryLight },
+  imageContainer: { position: 'relative', height: 300, backgroundColor: colors.surface },
   image: { width: '100%', height: '100%' },
   favoriteButton: {
     position: 'absolute',

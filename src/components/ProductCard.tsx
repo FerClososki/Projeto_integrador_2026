@@ -8,32 +8,28 @@ import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
 import { formatCurrency } from '../utils/currency';
-import { width, getNumColumns } from '../utils/layout';
 
 interface Props {
   product: Product;
   onPress: () => void;
-  variant?: 'default' | 'compact';
+  variant?: 'horizontal' | 'grid';
 }
 
-export function ProductCard({ product, onPress, variant = 'default' }: Props) {
+export function ProductCard({ product, onPress, variant = 'grid' }: Props) {
   const { isFavorite, toggleFavorite } = useContext(FavoritesContext);
   const { addToCart } = useContext(CartContext);
   const favorite = isFavorite(product.id);
 
-  const numColumns = getNumColumns();
-  
-  // Cálculo exato: Largura da tela - (Padding da tela * 2) - (Espaçamento entre cards * (colunas - 1))
-  const horizontalPadding = spacing.md * 2;
-  const cardSpacing = spacing.sm; 
-  
-  const availableWidth = width - horizontalPadding - (cardSpacing * (numColumns - 1));
-  const cardWidth = variant === 'compact' ? 140 : availableWidth / numColumns;
-
   return (
-    <Pressable style={[styles.card, { width: cardWidth }]} onPress={onPress}>
+    <Pressable 
+      style={[
+        styles.card, 
+        variant === 'horizontal' ? { width: 160, marginRight: spacing.md } : { flex: 1, margin: spacing.xs }
+      ]} 
+      onPress={onPress}
+    >
       <View style={styles.imageContainer}>
-        <Image source={{ uri: product.image }} style={styles.image} resizeMode="cover" />
+        <Image source={product.image} style={styles.image} resizeMode="contain" />
         <Pressable style={styles.favoriteButton} onPress={() => toggleFavorite(product)}>
           <Ionicons 
             name={favorite ? 'heart' : 'heart-outline'} 
@@ -73,8 +69,17 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 2 },
   },
-  imageContainer: { position: 'relative', marginBottom: spacing.sm },
-  image: { width: '100%', height: 120, borderRadius: spacing.borderRadius.md, backgroundColor: colors.primaryLight },
+  imageContainer: {
+    position: 'relative',
+    width: '100%',
+    aspectRatio: 1,
+    marginBottom: spacing.sm,
+    padding: spacing.sm,
+    borderRadius: spacing.borderRadius.md,
+    backgroundColor: colors.surface,
+    overflow: 'hidden',
+  },
+  image: { width: '100%', height: '100%' },
   favoriteButton: { position: 'absolute', top: 8, right: 8, backgroundColor: 'rgba(255,255,255,0.9)', borderRadius: 15, padding: 4 },
   info: { flex: 1, justifyContent: 'space-between' },
   name: { fontSize: typography.sizes.sm, fontWeight: '500', color: colors.text, minHeight: 36 },

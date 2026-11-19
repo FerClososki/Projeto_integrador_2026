@@ -1,8 +1,10 @@
-import React, { useContext } from 'react';
+import React, { useContext, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { AuthContext } from '../context/AuthContext';
 import { FavoritesContext } from '../context/FavoritesContext';
+import { AddressBook } from '../components/AddressBook';
+import { PaymentMethodBook } from '../components/PaymentMethodBook';
 import { colors } from '../theme/colors';
 import { spacing } from '../theme/spacing';
 import { typography } from '../theme/typography';
@@ -10,6 +12,8 @@ import { typography } from '../theme/typography';
 export function ProfileScreen({ navigation }: any) {
   const { user, signOut } = useContext(AuthContext);
   const { favorites } = useContext(FavoritesContext);
+  const [showAddresses, setShowAddresses] = useState(false);
+  const [showPayments, setShowPayments] = useState(false);
 
   if (!user) {
     return (
@@ -26,7 +30,8 @@ export function ProfileScreen({ navigation }: any) {
   const menuItems = [
     { icon: 'receipt-outline', label: 'Meus Pedidos', route: 'Orders' },
     { icon: 'heart-outline', label: 'Lista de Favoritos', route: 'Favorites' },
-    { icon: 'location-outline', label: 'Endereço de Entrega', route: 'Address' },
+    { icon: 'location-outline', label: 'Meus Endereços', route: 'Address' },
+    { icon: 'card-outline', label: 'Meus pagamentos', route: 'Payments' },
   ];
 
   return (
@@ -50,7 +55,9 @@ export function ProfileScreen({ navigation }: any) {
               } else if (item.route === 'Favorites') {
                 navigation.getParent()?.navigate('Favorites');
               } else if (item.route === 'Address') {
-                navigation.getParent()?.navigate('Address');
+                setShowAddresses(true);
+              } else if (item.route === 'Payments') {
+                setShowPayments(true);
               }
             }}
           >
@@ -72,6 +79,8 @@ export function ProfileScreen({ navigation }: any) {
         <Ionicons name="log-out-outline" size={20} color={colors.error} />
         <Text style={styles.logoutText}>Sair da Conta</Text>
       </Pressable>
+      {showAddresses && <AddressBook key={user.id} userId={user.id} onClose={() => setShowAddresses(false)} />}
+      {showPayments && <PaymentMethodBook key={user.id} userId={user.id} onClose={() => setShowPayments(false)} />}
     </ScrollView>
   );
 }

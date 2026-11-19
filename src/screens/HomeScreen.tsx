@@ -86,7 +86,7 @@ export function HomeScreen({ navigation }: any) {
           )}
         />
 
-        {/* Destaques Encantados */}
+                {/* Destaques Encantados */}
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Destaques Encantados</Text>
           <Pressable onPress={() => navigation.navigate('Search', { query: '' })}>
@@ -102,6 +102,7 @@ export function HomeScreen({ navigation }: any) {
           renderItem={({ item }) => (
             <ProductCard
               product={item}
+              variant="horizontal" // <-- Adicionado aqui
               onPress={() => navigation.navigate('ProductDetails', { productId: item.id })}
             />
           )}
@@ -123,6 +124,7 @@ export function HomeScreen({ navigation }: any) {
           renderItem={({ item }) => (
             <ProductCard
               product={item}
+              variant="horizontal" // <-- Adicionado aqui também
               onPress={() => navigation.navigate('ProductDetails', { productId: item.id })}
             />
           )}

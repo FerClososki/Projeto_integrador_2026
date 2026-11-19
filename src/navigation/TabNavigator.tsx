@@ -2,7 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { HomeScreen } from '../screens/HomeScreen';
-import { CategoriesScreen } from '../screens/CategoriesScreen';
+import { CategoriesScreen } from '../screens/CategoriesScreen'; // <-- Verifique esta linha
 import { CartScreen } from '../screens/CartScreen';
 import { ProfileScreen } from '../screens/ProfileScreen';
 import { OrdersScreen } from '../screens/OrdersScreen';
@@ -32,31 +32,11 @@ export function TabNavigator() {
         },
       })}
     >
-      <Tab.Screen 
-        name="Home" 
-        component={HomeScreen} 
-        options={{ tabBarLabel: 'Início' }} 
-      />
-      <Tab.Screen 
-        name="Categories" 
-        component={CategoriesScreen} 
-        options={{ tabBarLabel: 'Categorias' }} 
-      />
-      <Tab.Screen 
-        name="Cart" 
-        component={CartScreen} 
-        options={{ tabBarLabel: 'Sacola' }} 
-      />
-      <Tab.Screen 
-        name="Orders" 
-        component={OrdersScreen} 
-        options={{ tabBarLabel: 'Pedidos' }} 
-      />
-      <Tab.Screen 
-        name="Profile" 
-        component={ProfileScreen} 
-        options={{ tabBarLabel: 'Perfil' }} 
-      />
+      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Início' }} />
+      <Tab.Screen name="Categories" component={CategoriesScreen} options={{ tabBarLabel: 'Categorias' }} />
+      <Tab.Screen name="Cart" component={CartScreen} options={{ tabBarLabel: 'Sacola' }} />
+      <Tab.Screen name="Orders" component={OrdersScreen} options={{ tabBarLabel: 'Pedidos' }} />
+      <Tab.Screen name="Profile" component={ProfileScreen} options={{ tabBarLabel: 'Perfil' }} />
     </Tab.Navigator>
   );
 }
